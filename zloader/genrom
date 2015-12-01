@@ -102,16 +102,18 @@ void initmips(unsigned int msize,int dmsize,int dctrl)
     }
 	memset($mystart-0x1000,0,0x1000);//$mystart-0x1000 for frame(registers),memset for pretty
 #ifdef NOCACHE2
-	flush_cache();
+	//flush_cache(); // Lc modify
 #else
-	flush_cache2();
+	//flush_cache2(); //Lc modify
 #endif
+	tgt_puts("Lc_test ready to realinitmips \\r\\n");
     realinitmips(debug?dmsize:msize);
 }
 
 
 void realinitmips(unsigned int msize)
 {
+		tgt_puts("Lc_test: in realinitmips \\r\\n");
 	     asm ("li  \$29,$mystart-0x4000;\\n" \\
 "		       li \$2,$myinitmips;\\n" \\
 "			   move \$4,\%0;\\n" \\

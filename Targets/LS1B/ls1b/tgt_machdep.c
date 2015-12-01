@@ -277,12 +277,16 @@ initmips(unsigned int memsz)
 	bcopy(MipsException, (char *)TLB_MISS_EXC_VEC, MipsExceptionEnd - MipsException);
 	bcopy(MipsException, (char *)GEN_EXC_VEC, MipsExceptionEnd - MipsException);
 
-	CPU_FlushCache();
+	SBD_DISPLAY("BEV2",0);
+	//CPU_FlushCache();
+	SBD_DISPLAY("BEV3",0);
 
 	CPU_SetSR(0, SR_BOOT_EXC_VEC);
 	SBD_DISPLAY("BEV0",0);
 	
 	printf("BEV in SR set to zero.\n");
+	printf("Lc_test: memory = %x\n",memorysize);
+	printf("Lc_test: memsz = %x\n",memsz);
 #if NNAND
 #ifdef LS1FSOC
 	/*mutex nand use lpc pin*/

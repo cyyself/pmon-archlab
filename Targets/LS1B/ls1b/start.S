@@ -207,8 +207,8 @@ exc_common:
 	bal	hexserial
 	nop
 
-	bal mydebug_main
-	nop
+	//bal mydebug_main
+	//nop
 1:
 	b 1b
 	nop
@@ -240,8 +240,8 @@ locate:
 	la	s0,uncached
 	subu	s0,ra,s0
 
-	#bal	CPU_TLBClear
-	#nop
+//	#bal	CPU_TLBClear // Lc modify
+//	#nop
 	li	t0,SR_BOOT_EXC_VEC
 	mtc0	t0,COP_0_STATUS_REG
         mtc0    zero,COP_0_CAUSE_REG
@@ -251,6 +251,7 @@ locate:
     li  t1, 0x17  // div 4, fast_read + burst_en + memory_en
     sb  t1, 0x4(t0) // sfc_param
 
+#if 0 // Lc modify
 #ifdef LS1FSOC/* to adjust the DDR frequency */
 	li v0,0xbfc00000+(NVRAM_POS+PLL_OFFS)
 	lw a1,(v0)
@@ -324,6 +325,7 @@ locate:
     DELAY(0x3000)
 	
 #endif
+#endif
 
 /*disable all gpio*/
 	li a0,0xbfd00000
@@ -360,6 +362,7 @@ locate:
 	nop
 1:
 
+#if 0 // Lc modify
 // use only 8wins
 #define CPU_WIN_BASE 0xbfd00000
 #define CPU_WIN_MASK 0xbfd00040
@@ -444,7 +447,7 @@ cpu_win_fixup:
 	xor a2,0xf	
 #endif
 	sw a2,0x424(a0);
-
+#endif
 
 #define CF_7_SE         (1 << 3)        /* Secondary cache enable */
 #define CF_7_SC         (1 << 31)       /* Secondary cache not present */
@@ -454,8 +457,15 @@ cpu_win_fixup:
 #define CF_7_TS_AL      20              /* Shift to align */
 #define NOP8 nop;nop;nop;nop;nop;nop;nop;nop
 do_caches:
-	TTYDBG("Init caches...\r\n")
+	TTYDBG("Init caches... do noting...\r\n")
 
+	/* LED test */
+	li	t1, 0x7f
+	//li	t1, 0x0
+	li	t2, 0xbfd00010 //cr04 reg
+	sw	t1, 0x0(t2)
+
+#if 0 // Lc modify
 	li	s7, 0                   /* no L2 cache */
 	li	s8, 0                   /* no L3 cache */
 
@@ -474,8 +484,10 @@ do_caches:
     and    a0,a0,~((1<<12) | 3)
 	or     a0,a0,2
     mtc0   a0,COP_0_CONFIG
-	
+#endif
 
+//#include "newtest.32/mydebug.S"
+#if 0 // Lc modify
 ###lcd soft_reset and panel config&timing
 	li a0,0xbc301240
 	li a1,0x00100000
@@ -510,8 +522,121 @@ tgt_setddr:
 	nop
 	b func_q
 	nop
+#endif
+
+#if 0
+	li	v0, 0x100000
+	li  t1, 0xbfc00000
+1:
+	subu v0, v0, 0x1
+	lw   t0, 0x0(t1)
+	bnez v0, 1b
+	nop
+
+#endif
+#if 0
+// Lc add to test memory write data to sram
+	.align	5
+    la  v0, 0x80000400
+    la  v1, 0x80000400+0x07fffc00
+    li  t1, 0x11111111
+    li  t2, 0x21212121
+    li  t3, 0x31313131
+    li  t4, 0x41414141
+    li  t5, 0x51515151
+    li  t6, 0x61616161
+    li  t7, 0x71717171
+    li  t8, 0x81818181
+1:
+    sw  t1, 0x0(v0)
+    sw  t2, 0x4(v0)
+    sw  t3, 0x8(v0)
+    sw  t4, 0xc(v0)
+    sw  t5, 0x10(v0)
+    sw  t6, 0x14(v0)
+    sw  t7, 0x18(v0)
+    sw  t8, 0x1c(v0)
+    addiu   v0, v0, 0x20
+    bne v0, v1, 1b
+    nop
+
+	//PRINTSTR("mem write done. \r\n")
+	li	v0, 0xbfd00010
+	lw	t0, 0x0(v0)	//cr04 LED
+	andi t0, t0, 0x77 // LED bit 3
+	sw	t0, 0x0(v0)
+
+//read data from sram
+    la  v0, 0x80000400
+2:
+    lw  t9, 0x0(v0)
+    beq t9, t1, 1f
+	nop
+    jal checkerr
+    nop
+
+1:
+    lw  t9, 0x4(v0)
+	beq t9, t2, 1f
+	nop
+    jal checkerr
+    nop
+
+1:
+    lw  t9, 0x8(v0)
+	beq t9, t3, 1f
+	nop
+    jal checkerr
+    nop
+
+1:
+    lw  t9, 0xc(v0)
+	beq t9, t4, 1f
+	nop
+    jal checkerr
+    nop
+1:
+    lw  t9, 0x10(v0)
+	beq t9, t5, 1f
+	nop
+    jal checkerr
+    nop
+
+1:
+    lw  t9, 0x14(v0)
+	beq t9, t6, 1f
+	nop
+    jal checkerr
+    nop
+
+1:
+    lw  t9, 0x18(v0)
+	beq t9, t7, 1f
+	nop
+    jal checkerr
+    nop
+
+1:
+    lw  t9, 0x1c(v0)
+	beq t9, t8, 1f
+	nop
+    jal checkerr
+    nop
+1:
+    addiu   v0, v0, 0x20
+    bne v0, v1, 2b
+    nop
+
+	li	t1, 0xbfd00010
+	lw	t0, 0x0(t1)	//cr04 LED
+	andi t0, t0, 0x6f // LED bit 4
+	sw	t0, 0x0(t1)
+
+	//PRINTSTR("mem_test ok. \r\n")
+#endif
 
 bootnow:
+
 PRINTSTR("end test\r\n");
 #define	FCALL_PRINTSTR(x) \
 	.rdata;98: .asciz x; .text; la a0, 98b; la v0, stringserial; addu v0,s0;jalr v0; nop	
@@ -523,10 +648,7 @@ PRINTSTR("end test\r\n");
 	jalr v0; \
 	nop;
 
-
-
-
-
+#if 1
 /*copy copy program to sdram to make copy fast*/
 
 	la t0,121f
@@ -546,10 +668,37 @@ PRINTSTR("end test\r\n");
 	li t0,0xa0000000
    	jr t0	
 	nop		
+#endif
 
+#defined DEBUG_LOCORE
 .align 3
 121: 
 	FCALL_PRINTSTR("Copy PMON to execute location...\r\n")
+
+#ifdef DEBUG_LOCORE
+	FCALL_PRINTSTR("  start = 0x")
+	la	a0, start
+	BAL(hexserial)
+	nop
+	FCALL_PRINTSTR("\r\n  s0 = 0x")
+	move	a0, s0
+	BAL	(hexserial)
+	nop
+
+	FCALL_PRINTSTR("\r\n  _edata = 0x")
+	la	a0, _edata
+	BAL	(hexserial)
+	nop
+
+	FCALL_PRINTSTR("\r\n  _end = 0x")
+	la	a0, _end
+	BAL	(hexserial)
+	nop
+	FCALL_PRINTSTR("\r\n")
+
+#endif
+
+#if 1
 	la	a0, start
 	addu a1,a0,s0
 	la	a2, _edata
@@ -580,6 +729,18 @@ PRINTSTR("end test\r\n");
 	addu	t1, 4
 	bne	t2, t0, 1b
 	nop
+#else
+	la	a0, start
+	li	a1, 0xbfc00000
+	la	a2, _edata
+	/* copy test section */
+1:
+	lw	a3, 0(a1)
+	sw	a3, 0(a0)
+	addu	a0, 4
+	bne	a2, a0, 1b
+	addu	a1, 4
+#endif
 
 	FCALL_PRINTSTR("\ncopy text section done.\r\n")
 	
@@ -601,10 +762,13 @@ PRINTSTR("end test\r\n");
 	sw	a0, CpuTertiaryCacheSize /* Set L3 cache size */
 
 
+	li	msize, 0x08000000 // Lc add 128M
 	move	a0,msize
 	srl	a0,20
+	//li	a1, 0
 
 
+	//FCALL_PRINTSTR("Lc_test jump to initmips.\r\n")
 	la	v0, initmips
 	jalr	v0
 	nop
@@ -853,6 +1017,7 @@ END(tgt_getchar)
 #define B115200 115200
 
 LEAF(initserial)
+#if 0 // Lc modify
 #ifdef CONFIG_EJTAG_SERIAL
 	/*enable cp0 count*/
 	mfc0 v0,$23
@@ -939,6 +1104,28 @@ LEAF(initserial)
         sb      v1, NSREG(NS16550_IER)(v0)
 	j	ra
 	nop
+#else
+	la	v0, COM1_BASE_ADDR
+1:
+	li	v1, FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_4
+	sb	v1, NSREG(NS16550_FIFO)(v0)
+	li	v1, CFCR_DLAB
+	sb	v1, NSREG(NS16550_CFCR)(v0)
+ 	//li	v1, NS16550HZ/(16*CONS_BAUD)
+	li	v1, 0x23 //Lc modify Baut 57600
+	sb	v1, NSREG(NS16550_DATA)(v0)
+	srl	v1, 8
+	sb	v1, NSREG(NS16550_IER)(v0)
+	li	v1, CFCR_8BITS
+	sb	v1, NSREG(NS16550_CFCR)(v0)
+	li	v1, MCR_DTR|MCR_RTS
+	sb	v1, NSREG(NS16550_MCR)(v0)
+	li	v1, 0x0
+	sb	v1, NSREG(NS16550_IER)(v0)
+
+	j	ra
+	nop
+#endif
 END(initserial)
 
 __main:
@@ -969,8 +1156,24 @@ hexchar:
  *   SDRAM modules. This code must be entirely PIC and RAM independent.
  */
 
+// Lc add to test memory
+    .ent checkerr
+checkerr:
+    //la  a0, errstr
+    //bal stringserial
+    //nop
+	li  t1, 0xbfd00010   //confreg cr04
+	lw	t0, 0x0(t1)
+	andi t0, t0, 0x5f //LED bit 5
+	sw  t0, 0x0(t1)
+    jr ra
+    nop
+    .end checkerr
 
-
+	.rdata
+	.align	5
+errstr:
+    .asciz "error"
 
 #define Index_Store_Tag_D			0x09
 #define Index_Invalidate_I			0x00
