@@ -346,13 +346,23 @@ signal(s, a)
 {
 	struct sigaction sa, osa;
 
+	printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 	sa.sa_handler = a;
+	printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 	sigemptyset(&sa.sa_mask);
+	printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 	sa.sa_flags = 0;
-	if (!sigismember(&_sigintr, s))
+	printf("Lc_test: in %s at %d\n", __func__, __LINE__);
+	if (!sigismember(&_sigintr, s)) {
+		printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		sa.sa_flags |= SA_RESTART;
-	if (sigaction(s, &sa, &osa) < 0)
+	}
+	printf("Lc_test: in %s at %d\n", __func__, __LINE__);
+	if (sigaction(s, &sa, &osa) < 0) {
+		printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		return (BADSIG);
+	}
+	printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 	return (osa.sa_handler);
 }
 

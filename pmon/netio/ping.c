@@ -305,7 +305,9 @@ main(argc, argv)
 			options |= F_VERBOSE;
 			break;
 		default:
+			printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 			usage();
+			printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		}
 	argc -= optind;
 	argv += optind;
@@ -414,35 +416,53 @@ main(argc, argv)
 	(void)signal(SIGINT, (sig_t)finish);
 	(void)signal(SIGALRM, (sig_t)catcher);
 
-	while (preload--)		/* fire off them quickies */
+	while (preload--){		/* fire off them quickies */
+		printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		pinger();
+		printf("Lc_test: in %s at %d\n", __func__, __LINE__);
+	}
 
-	if ((options & F_FLOOD) == 0)
+	if ((options & F_FLOOD) == 0){
+		printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		catcher();		/* start things going */
+		printf("Lc_test: in %s at %d\n", __func__, __LINE__);
+	}
 
 	for (;;) {
 		struct sockaddr_in from;
 		register int cc;
 		int fromlen;
 
+		printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		if (options & F_FLOOD) {
+			printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 			pinger();
+			printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 			timeout.tv_sec = 0;
 			timeout.tv_usec = 10000;
 			fdmask = 1 << s;
 			if (select(s + 1, (fd_set *)&fdmask, (fd_set *)NULL,
-			    (fd_set *)NULL, &timeout) < 1)
+			    (fd_set *)NULL, &timeout) < 1) {
+				printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 				continue;
+			}
 		}
+		printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		fromlen = sizeof(from);
+		printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		if ((cc = recvfrom(s, (char *)packet, packlen, 0,
 		    (struct sockaddr *)&from, &fromlen)) < 0) {
-			if (errno == EINTR)
+			printf("Lc_test: in %s at %d\n", __func__, __LINE__);
+			if (errno == EINTR) {
+				printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 				continue;
+			}
 			perror("ping: recvfrom");
 			continue;
 		}
+		printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		pr_pack((char *)packet, cc, &from);
+		printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		if (npackets && nreceived >= npackets)
 			break;
 	}
@@ -466,7 +486,9 @@ catcher()
 {
 	int waittime;
 
+	printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 	pinger();
+	printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 	if (!npackets || ntransmitted < npackets) {
 		(void)signal(SIGALRM, (sig_t)catcher);
 		setitimer(ITIMER_REAL, &interval, (struct itimerval *)NULL);
@@ -510,6 +532,7 @@ pinger()
 
 	cc = datalen + 8;			/* skips ICMP portion */
 
+	printf("Lc_test: groupsize = %d\n", groupsize);
 	for (n = 0; n < groupsize; n++) {
 		icp->icmp_cksum = 0;
 		icp->icmp_seq = ntransmitted++;
@@ -527,6 +550,7 @@ pinger()
 			    hostname, cc, i);
 		}
 	}
+	printf("Lc_test: ntransmitted = %d\n", ntransmitted);
 	if (!(options & F_QUIET) && options & F_FLOOD)
 #ifdef PMON
 	  {

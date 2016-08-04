@@ -762,6 +762,11 @@ PRINTSTR("end test\r\n");
 	sw	a0, CpuTertiaryCacheSize /* Set L3 cache size */
 
 
+	// Lc mark
+	FCALL_PRINTSTR("Lc_test: Read out the cp0 status regester.\r\n")
+	mfc0	a0, COP_0_STATUS_REG
+	BAL(hexserial)
+	nop
 	li	msize, 0x08000000 // Lc add 128M
 	move	a0,msize
 	srl	a0,20

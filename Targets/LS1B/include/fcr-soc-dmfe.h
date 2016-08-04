@@ -1,7 +1,8 @@
 
 #ifndef __FCR_SOC_DFME_H_
 #define __FCR_SOC_DFME_H_
-#define MAC_REG_BASE	0xBF005200  //zgj 0x1f002000
+//#define MAC_REG_BASE	0xBF005200  //zgj 0x1f002000
+#define MAC_REG_BASE	0xBFF00000  //zgj 0x1f002000
 
 #define __ioswab8(x) (x)
 #define __ioswab16(x) (x)
