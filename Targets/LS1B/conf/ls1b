@@ -116,7 +116,7 @@ option		AUTOLOAD
 #option		CONFIG_PCI0_HUGE_MEM	
 #option		CONFIG_PCI0_GAINT_MEM	
 #option		CONFIG_CACHE_64K_4WAY
-#option 	    NVRAM_IN_FLASH	
+option 	    NVRAM_IN_FLASH
 #option		FLASH_READ_ONLY
 
 #
@@ -136,6 +136,9 @@ loopdev0	at mainbus0
 #### Networking Devices
 
 select	ether
+select	inet
+select	tcp
+#select	tftpd
 dmfe0	at localbus0
 #lakers0		at localbus0
 #syn0		at localbus0
@@ -179,7 +182,7 @@ select fatfs
 select gzip
 option INPUT_FROM_BOTH
 option OUTPUT_TO_BOTH
-select nand
+#select nand
 select cmd_xyzmodem
 select loop
 select raw_ether
