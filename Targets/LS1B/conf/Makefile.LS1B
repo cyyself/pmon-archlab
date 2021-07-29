@@ -3,7 +3,7 @@ S:=$(shell cd ../../../..; pwd)
 endif
 TARGET= ${S}/Targets/LS1B
 SUBTARGET?=ls1b
-CPPFLAGS=-mips2
+CPPFLAGS=-mips1
 START?=start.o
 
 %OBJS

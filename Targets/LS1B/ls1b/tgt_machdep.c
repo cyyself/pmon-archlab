@@ -285,9 +285,7 @@ initmips(unsigned int memsz)
 	SBD_DISPLAY("BEV0",0);
 	
 	printf("BEV in SR set to zero.\n");
-	printf("Lc_test: memory = %x\n",memorysize);
-	printf("Lc_test: memsz = %x\n",memsz);
-#if NNAND
+#if 0
 #ifdef LS1FSOC
 	/*mutex nand use lpc pin*/
     *((volatile unsigned int *)0xbfd00420) = (*((volatile unsigned int *)0xbfd00420) & 0x01ffffff) |0x0a000000;

@@ -150,14 +150,29 @@ while(1){
 	return err;
 }
 
+void led_on(char witch)
+{
+	asm volatile(\
+	"	li	  $2, 0xbfd00010;\n" \
+	"	lb	$3, 0($2);\n"
+	"	and $3, $3, %0;\n"
+	"	sb	$3, 0($2); \n" \
+	::"r"(witch)
+	: "$2", "$3"
+	);
+
+}
 
 extern char     end[];
 static int __init run_unzip(char *start,int to)
 {
 int err;
+led_on(0x77);
 again:
 inflate_workspace = (void *)end;
+led_on(0x3f);
 err=compress_gunzip(start,sizeof(biosdata),to);
+led_on(0x5f);
 if(err<0){stringserial("retry\n");goto again;}
 }
 

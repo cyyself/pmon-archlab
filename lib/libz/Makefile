@@ -59,3 +59,83 @@ ${OBJDIR}/lib${LIB}.a: ${OBJS}
 	@${AR} cq $@ ${OBJS}
 	${RANLIB} $@
 # DO NOT DELETE
+
+adler32.o: zlib.h zconf.h
+crc32.o: zlib.h zconf.h
+infblock.o: zutil.h zlib.h zconf.h
+infblock.o: /home/cyy/Downloads/pmon_archlab/include/stddef.h
+infblock.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/ansi.h
+infblock.o: /home/cyy/Downloads/pmon_archlab/include/string.h
+infblock.o: /home/cyy/Downloads/pmon_archlab/sys/sys/cdefs.h
+infblock.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/cdefs.h
+infblock.o: /home/cyy/Downloads/pmon_archlab/include/stdlib.h
+infblock.o: /home/cyy/Downloads/pmon_archlab/sys/sys/types.h
+infblock.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/types.h
+infblock.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/endian.h
+infblock.o: /home/cyy/Downloads/pmon_archlab/sys/sys/endian.h
+infblock.o: /home/cyy/Downloads/pmon_archlab/include/errno.h infblock.h
+infblock.o: inftrees.h infcodes.h infutil.h
+infcodes.o: zutil.h zlib.h zconf.h
+infcodes.o: /home/cyy/Downloads/pmon_archlab/include/stddef.h
+infcodes.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/ansi.h
+infcodes.o: /home/cyy/Downloads/pmon_archlab/include/string.h
+infcodes.o: /home/cyy/Downloads/pmon_archlab/sys/sys/cdefs.h
+infcodes.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/cdefs.h
+infcodes.o: /home/cyy/Downloads/pmon_archlab/include/stdlib.h
+infcodes.o: /home/cyy/Downloads/pmon_archlab/sys/sys/types.h
+infcodes.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/types.h
+infcodes.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/endian.h
+infcodes.o: /home/cyy/Downloads/pmon_archlab/sys/sys/endian.h
+infcodes.o: /home/cyy/Downloads/pmon_archlab/include/errno.h inftrees.h
+infcodes.o: infblock.h infcodes.h infutil.h inffast.h
+inffast.o: zutil.h zlib.h zconf.h
+inffast.o: /home/cyy/Downloads/pmon_archlab/include/stddef.h
+inffast.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/ansi.h
+inffast.o: /home/cyy/Downloads/pmon_archlab/include/string.h
+inffast.o: /home/cyy/Downloads/pmon_archlab/sys/sys/cdefs.h
+inffast.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/cdefs.h
+inffast.o: /home/cyy/Downloads/pmon_archlab/include/stdlib.h
+inffast.o: /home/cyy/Downloads/pmon_archlab/sys/sys/types.h
+inffast.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/types.h
+inffast.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/endian.h
+inffast.o: /home/cyy/Downloads/pmon_archlab/sys/sys/endian.h
+inffast.o: /home/cyy/Downloads/pmon_archlab/include/errno.h inftrees.h
+inffast.o: infblock.h infcodes.h infutil.h inffast.h
+inflate.o: zutil.h zlib.h zconf.h
+inflate.o: /home/cyy/Downloads/pmon_archlab/include/stddef.h
+inflate.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/ansi.h
+inflate.o: /home/cyy/Downloads/pmon_archlab/include/string.h
+inflate.o: /home/cyy/Downloads/pmon_archlab/sys/sys/cdefs.h
+inflate.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/cdefs.h
+inflate.o: /home/cyy/Downloads/pmon_archlab/include/stdlib.h
+inflate.o: /home/cyy/Downloads/pmon_archlab/sys/sys/types.h
+inflate.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/types.h
+inflate.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/endian.h
+inflate.o: /home/cyy/Downloads/pmon_archlab/sys/sys/endian.h
+inflate.o: /home/cyy/Downloads/pmon_archlab/include/errno.h infblock.h
+inftrees.o: zutil.h zlib.h zconf.h
+inftrees.o: /home/cyy/Downloads/pmon_archlab/include/stddef.h
+inftrees.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/ansi.h
+inftrees.o: /home/cyy/Downloads/pmon_archlab/include/string.h
+inftrees.o: /home/cyy/Downloads/pmon_archlab/sys/sys/cdefs.h
+inftrees.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/cdefs.h
+inftrees.o: /home/cyy/Downloads/pmon_archlab/include/stdlib.h
+inftrees.o: /home/cyy/Downloads/pmon_archlab/sys/sys/types.h
+inftrees.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/types.h
+inftrees.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/endian.h
+inftrees.o: /home/cyy/Downloads/pmon_archlab/sys/sys/endian.h
+inftrees.o: /home/cyy/Downloads/pmon_archlab/include/errno.h inftrees.h
+inftrees.o: inffixed.h
+infutil.o: zutil.h zlib.h zconf.h
+infutil.o: /home/cyy/Downloads/pmon_archlab/include/stddef.h
+infutil.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/ansi.h
+infutil.o: /home/cyy/Downloads/pmon_archlab/include/string.h
+infutil.o: /home/cyy/Downloads/pmon_archlab/sys/sys/cdefs.h
+infutil.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/cdefs.h
+infutil.o: /home/cyy/Downloads/pmon_archlab/include/stdlib.h
+infutil.o: /home/cyy/Downloads/pmon_archlab/sys/sys/types.h
+infutil.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/types.h
+infutil.o: /home/cyy/Downloads/pmon_archlab/Targets/LS1B/compile/ls1b/machine/endian.h
+infutil.o: /home/cyy/Downloads/pmon_archlab/sys/sys/endian.h
+infutil.o: /home/cyy/Downloads/pmon_archlab/include/errno.h infblock.h
+infutil.o: inftrees.h infcodes.h infutil.h

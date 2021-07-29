@@ -143,8 +143,6 @@ md_dumpexc(struct trapframe *tf)
 
         printf("\r\nException Cause=%s, SR=%p, PC=%p\r\n",
                 md_getexcname(tf), (int)md_getsr(tf), md_getpc(tf));
-		printf("Lc_test: read out the cause regester: %mx\r\n", cause);
-		printf("Lc_test: read out the status regester: %mx\r\n", status);
 	printf("CONTEXT=%llp, XCONTEXT=%llp\r\n", tf->context, tf->xcontext);
 	printf("BADVADDR=%llp, ENTHI=%llp\r\n", tf->badvaddr, tf->enthi);
 	printf("ENTLO0=%llp, ENTLO1=%llp\r\n\r\n", tf->entlo0, tf->entlo1);

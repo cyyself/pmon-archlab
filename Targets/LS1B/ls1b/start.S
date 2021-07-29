@@ -132,8 +132,9 @@ uncached:
 ext_map_and_reboot:
 	li	a0,0x10000000 /*test from 0xbfcxxxxx or 0xff20xxxx */
 	and	a0,ra
-	bnez	a0,1f
 	la	a0,_start
+	bnez	a0,1f
+    nop
 	li	s0,0xbfc00000
 	subu	s0,a0
 1:
@@ -160,8 +161,9 @@ ext_map_and_reboot:
 	.align	7			/* bfc00380 */
 	li	a0,0x10000000 /*test from 0xbfcxxxxx or 0xff20xxxx */
 	and	a0,ra
-	bnez	a0,1f
 	la	a0,_start
+	bnez	a0,1f
+    nop
 	li	s0,0xbfc00000
 	subu	s0,a0
 1:
@@ -240,92 +242,14 @@ locate:
 	la	s0,uncached
 	subu	s0,ra,s0
 
-//	#bal	CPU_TLBClear // Lc modify
-//	#nop
-	li	t0,SR_BOOT_EXC_VEC
-	mtc0	t0,COP_0_STATUS_REG
-        mtc0    zero,COP_0_CAUSE_REG
+	li	    t0,  SR_BOOT_EXC_VEC
+	mtc0	t0,  COP_0_STATUS_REG
+    mtc0    zero,COP_0_CAUSE_REG
 	.set noreorder
 /*spi speed*/
     li  t0, 0xbfe80000
     li  t1, 0x17  // div 4, fast_read + burst_en + memory_en
     sb  t1, 0x4(t0) // sfc_param
-
-#if 0 // Lc modify
-#ifdef LS1FSOC/* to adjust the DDR frequency */
-	li v0,0xbfc00000+(NVRAM_POS+PLL_OFFS)
-	lw a1,(v0)
-
-	li v0,0xffff0000
-	and v0,a1
-	bnez v0,1f
-	nop
-
-	li  v0, 0x8888
-	or  a1, a1, v0
-
-	b 2f
-	nop
-1:
-#define DDRCFG_DATA (0x8888|(CPU_MULT-1)|((DDR_MULT-3)<<8))
-    li  a1, DDRCFG_DATA   // 1fboard 25MHz
-2:
-    li  a0, 0xbfe78030
-    sw  a1, 0x0(a0)
-    nop
-	lw	a2, 0x0(a0)
-	xor a2,a1
-	andi a2,0xf0f
-	bnez a2,2b
-	nop
-#else
-    li  a0, 0xbfe78030
-    /*31:dc_div_en,30-26:dc_div,25:cpu_div_en,24-20:cpu_div,19:ddr_div_en,18-14:ddr_div*/
-#if 0
-    li v1,0x92298000
-    li  a1, 0x39f0a
-#else
-	li v0,0xbfc00000+(NVRAM_POS+PLL_OFFS)
-	lw v1,4(v0)
-	lw a1,(v0)
-
-	li v0,0xfffc0000
-	and v0,a1
-	bnez v0,1f
-	nop
-
-	andi v0,v1,0x3f
-	bnez v0,1f
-	nop
-
-	li v0,(1<<31)|(1<<25)|(1<<19)
-	and a2,v0,v1
-	bne a2,v0,1f
-	nop
-
-	beqz v1,1f
-	nop
-	nop
-	b 2f
-	nop
-1:
-    li v1, 0x8a290000//(1<<31)|(4<<26)|(1<<25)|(1<<20)|(1<<19)|(2<<14)|0x2a00
-    li  a1, 0x31812
-
-2:
-#endif
-	or v1,0x2a00
-    sw v1,4(a0)
-    sw a1,(a0);
-
-1:
-   lw v1,(a0)
-   bne a1,v1,1b
-   nop
-    DELAY(0x3000)
-	
-#endif
-#endif
 
 /*disable all gpio*/
 	li a0,0xbfd00000
@@ -335,7 +259,6 @@ locate:
 	li a0,0
 	bal	initserial
 	nop
-	
 
 	PRINTSTR("\r\nPMON2000 MIPS Initializing. Standby...\r\n")
 	PRINTSTR("ERRORPC=")
@@ -362,93 +285,6 @@ locate:
 	nop
 1:
 
-#if 0 // Lc modify
-// use only 8wins
-#define CPU_WIN_BASE 0xbfd00000
-#define CPU_WIN_MASK 0xbfd00040
-#define CPU_WIN_MMAP 0xbfd00080
-
-#define set_cpu_window(id, base, mask, mmap) \
-        li      t0, CPU_WIN_BASE          ;  \
-        sw      $0, 0x80+id*8(t0)         ;  \
-        li      t1, base                  ;  \
-        sw      t1, 0x00+id*8(t0)         ;  \
-        sw      $0, 0x04+id*8(t0)         ;  \
-        li      t1, mask                  ;  \
-        sw      t1, 0x40+id*8(t0)         ;  \
-        sw      $0, 0x44+id*8(t0)         ;  \
-        li      t1, mmap                  ;  \
-        sw      t1, 0x80+id*8(t0)         ;  \
-        sw      $0, 0x84+id*8(t0)
-
-#if 1 /* fixup cpu window */
-cpu_win_fixup:
-        //
-        // hit         = (paddr & mask) == (mmap & mask)
-        // mapped_addr =  paddr &~mask | mmap & mask
-        //
-        // mmap[7] -> enable
-		// mmap[5] -> block trans enable,cache
-        // mmap[4] -> fetch ins
-        // mmap[1:0] -> destination
-        //
-        // NOTE: the address windows has priority, win0 > win1 > ... > win7
-        set_cpu_window(0, 0x1fc00000, 0xfff00000, 0x1fc000f3) // boot rom
-        set_cpu_window(1, 0x10000000, 0xf8000000, 0x10000001) // PCI mem0, mem1,    disabled
-        set_cpu_window(2, 0x18000000, 0xfc000000, 0x18000001) // PCI mem2           disabled
-        set_cpu_window(3, 0x1c000000, 0xffe00000, 0x1c000001) // PCI cfg/IO/header  disabled
-        set_cpu_window(4, 0x1c200000, 0xffe00000, 0x1c2000d2) // gpu 1c2 /dc 1c3
-        set_cpu_window(5, 0x1f000000, 0xff000000, 0x1f0000d3) // AXIMUX
-        set_cpu_window(6, 0x40000000, 0xc0000000, 0x000000f0) // DDR 1GB
-        set_cpu_window(7, 0x00000000, 0x00000000, 0x000000f0) // everything else
-        // after this fixup, the kernel code should be compiled with
-        // uncached instruction fetch patch
-#endif 
-
-
-	/* 
-	 * Now determine DRAM configuration and size by
-	 * reading the I2C EEROM on the DIMMS
-	 */
-
-	/*
-	 * set gpio 66 to make ddr #CKE low
-	 */
-	li	t0,0xbfd010c8
-	li	t1,0x4
-	sw	t1,(t0)
-	li	t0,0xbfd010f8
-	li	t1,0x0
-	sw	t1,(t0)
-
-
-#ddr2config by cww 20090901
-        PRINTSTR("DDR2 config begin_2\r\n")
-        bal     ddr2_config
-        nop
-        PRINTSTR("DDR2 config end\r\n")
-
-	li a0,0xbfd00000
-	lw a2,0x424(a0);
-#ifdef CONFIG_DDR16BIT
-/*16bit ddr and disable conf*/ 
-	li a1,0x110000
-        li      msize,0x08000000
-#else
-/*disable conf*/
-	li a1,0x100000
-        li      msize,0x10000000
-#endif
-	or a2,a1
-
-/*100M phy*/
-	ori a2,0xf
-#ifndef CONFIG_PHY100M
-	xor a2,0xf	
-#endif
-	sw a2,0x424(a0);
-#endif
-
 #define CF_7_SE         (1 << 3)        /* Secondary cache enable */
 #define CF_7_SC         (1 << 31)       /* Secondary cache not present */
 #define CF_7_TE         (1 << 12)       /* Tertiary cache enable */
@@ -459,13 +295,7 @@ cpu_win_fixup:
 do_caches:
 	TTYDBG("Init caches... do noting...\r\n")
 
-	/* LED test */
-	li	t1, 0x7f
-	//li	t1, 0x0
-	li	t2, 0xbfd00010 //cr04 reg
-	sw	t1, 0x0(t2)
-
-#if 0 // Lc modify
+#if 1 // cache init
 	li	s7, 0                   /* no L2 cache */
 	li	s8, 0                   /* no L3 cache */
 
@@ -480,164 +310,18 @@ do_caches:
 	TTYDBG("\r\n\r\n")
 
 
+#if 1
+	/* Open cache */
     mfc0   a0,COP_0_CONFIG
-    and    a0,a0,~((1<<12) | 3)
-	or     a0,a0,2
+    //and    a0,a0,~((1<<12) | 3)
+    and    a0,a0,~(7)
+	or     a0,a0,3
     mtc0   a0,COP_0_CONFIG
 #endif
-
-//#include "newtest.32/mydebug.S"
-#if 0 // Lc modify
-###lcd soft_reset and panel config&timing
-	li a0,0xbc301240
-	li a1,0x00100000
-	sw a1,0x0(a0)
-	li a1,0x00000000
-	sw a1,0x0(a0)
-
-	li a0,0xbc3013c0
-	li a1,0x80001111
-	sw a1,0x0(a0)
-	li a1,0x33333333
-	sw a1,0x20(a0)
-
-
-#define HAVE_TARGET_SETDDR
-#include "newtest.32/mydebug.S"
-tgt_setddr:
-	PRINTSTR("input 0xbfe78030:");
-	bal inputhex
-	nop
-	move t0,v0
-	PRINTSTR("\r\ninput 0xbfe78034:");
-	bal inputhex
-	nop
-	li v1,0xbfe78030
-	sw t0,(v1)
-	sw v0,4(v1)
-	li a0,0
-	bal initserial
-	nop
-	bal ddr2_config_start
-	nop
-	b func_q
-	nop
-#endif
-
-#if 0
-	li	v0, 0x100000
-	li  t1, 0xbfc00000
-1:
-	subu v0, v0, 0x1
-	lw   t0, 0x0(t1)
-	bnez v0, 1b
-	nop
-
-#endif
-#if 0
-// Lc add to test memory write data to sram
-	.align	5
-    la  v0, 0x80000400
-    la  v1, 0x80000400+0x07fffc00
-    li  t1, 0x11111111
-    li  t2, 0x21212121
-    li  t3, 0x31313131
-    li  t4, 0x41414141
-    li  t5, 0x51515151
-    li  t6, 0x61616161
-    li  t7, 0x71717171
-    li  t8, 0x81818181
-1:
-    sw  t1, 0x0(v0)
-    sw  t2, 0x4(v0)
-    sw  t3, 0x8(v0)
-    sw  t4, 0xc(v0)
-    sw  t5, 0x10(v0)
-    sw  t6, 0x14(v0)
-    sw  t7, 0x18(v0)
-    sw  t8, 0x1c(v0)
-    addiu   v0, v0, 0x20
-    bne v0, v1, 1b
-    nop
-
-	//PRINTSTR("mem write done. \r\n")
-	li	v0, 0xbfd00010
-	lw	t0, 0x0(v0)	//cr04 LED
-	andi t0, t0, 0x77 // LED bit 3
-	sw	t0, 0x0(v0)
-
-//read data from sram
-    la  v0, 0x80000400
-2:
-    lw  t9, 0x0(v0)
-    beq t9, t1, 1f
-	nop
-    jal checkerr
-    nop
-
-1:
-    lw  t9, 0x4(v0)
-	beq t9, t2, 1f
-	nop
-    jal checkerr
-    nop
-
-1:
-    lw  t9, 0x8(v0)
-	beq t9, t3, 1f
-	nop
-    jal checkerr
-    nop
-
-1:
-    lw  t9, 0xc(v0)
-	beq t9, t4, 1f
-	nop
-    jal checkerr
-    nop
-1:
-    lw  t9, 0x10(v0)
-	beq t9, t5, 1f
-	nop
-    jal checkerr
-    nop
-
-1:
-    lw  t9, 0x14(v0)
-	beq t9, t6, 1f
-	nop
-    jal checkerr
-    nop
-
-1:
-    lw  t9, 0x18(v0)
-	beq t9, t7, 1f
-	nop
-    jal checkerr
-    nop
-
-1:
-    lw  t9, 0x1c(v0)
-	beq t9, t8, 1f
-	nop
-    jal checkerr
-    nop
-1:
-    addiu   v0, v0, 0x20
-    bne v0, v1, 2b
-    nop
-
-	li	t1, 0xbfd00010
-	lw	t0, 0x0(t1)	//cr04 LED
-	andi t0, t0, 0x6f // LED bit 4
-	sw	t0, 0x0(t1)
-
-	//PRINTSTR("mem_test ok. \r\n")
 #endif
 
 bootnow:
 
-PRINTSTR("end test\r\n");
 #define	FCALL_PRINTSTR(x) \
 	.rdata;98: .asciz x; .text; la a0, 98b; la v0, stringserial; addu v0,s0;jalr v0; nop	
 
@@ -762,18 +446,11 @@ PRINTSTR("end test\r\n");
 	sw	a0, CpuTertiaryCacheSize /* Set L3 cache size */
 
 
-	// Lc mark
-	FCALL_PRINTSTR("Lc_test: Read out the cp0 status regester.\r\n")
-	mfc0	a0, COP_0_STATUS_REG
-	BAL(hexserial)
-	nop
 	li	msize, 0x08000000 // Lc add 128M
 	move	a0,msize
 	srl	a0,20
 	//li	a1, 0
 
-
-	//FCALL_PRINTSTR("Lc_test jump to initmips.\r\n")
 	la	v0, initmips
 	jalr	v0
 	nop
@@ -794,61 +471,43 @@ stuck:
 #define MTC0 mtc0
 #endif
 LEAF(CPU_TLBClear)
-	li	a3, 0			# First TLB index.
-
-	li	a2, PG_SIZE_4K
-	MTC0   a2, COP_0_TLB_PG_MASK   # Whatever...
-
-1:
-	MTC0   zero, COP_0_TLB_HI	# Clear entry high.
-	MTC0   zero, COP_0_TLB_LO0	# Clear entry low0.
-	MTC0   zero, COP_0_TLB_LO1	# Clear entry low1.
-
-	mtc0    a3, COP_0_TLB_INDEX	# Set the index.
-	addiu	a3, 1
-	li	a2, 64
-	nop
-	nop
-	tlbwi				# Write the TLB
-
-	bne	a3, a2, 1b
-	nop
-
-	jr	ra
-	nop
+    b CPU_TLBInit
+    nop
 END(CPU_TLBClear)
 
 /*
  *  Set up the TLB. Normally called from start.S.
  */
 LEAF(CPU_TLBInit)
+#if 1
+########
+##TLB init
+########
 	li	a3, 0			# First TLB index.
 
-	li	a2, PG_SIZE_16M
-	MTC0   a2, COP_0_TLB_PG_MASK   # All pages are 16Mb.
+    li	a2, PG_SIZE_4K
+	MTC0   a2, COP_0_TLB_PG_MASK   # Whatever...
 
 1:
-	and	a2, a0, PG_SVPN
-	MTC0   a2, COP_0_TLB_HI	# Set up entry high.
-
-	move	a2, a0
-	srl	a2, a0, PG_SHIFT 
-	and	a2, a2, PG_FRAME
-	ori	a2, PG_IOPAGE
-	MTC0   a2, COP_0_TLB_LO0	# Set up entry low0.
-	addu	a2, (0x01000000 >> PG_SHIFT)
-	MTC0   a2, COP_0_TLB_LO1	# Set up entry low1.
+    li     a0, 0xbfc00000
+	MTC0   a0, COP_0_TLB_HI	# Clear entry high.
+	MTC0   zero, COP_0_TLB_LO0	# Clear entry low0.
+	MTC0   zero, COP_0_TLB_LO1	# Clear entry low1.
 
 	mtc0    a3, COP_0_TLB_INDEX	# Set the index.
 	addiu	a3, 1
-	li	a2, 0x02000000
-	subu	a1, a2
+	li	a2, 32 #32-entry
+	nop
 	nop
 	tlbwi				# Write the TLB
 
-	bgtz	a1, 1b
-	addu	a0, a2			# Step address 32Mb.
-
+	bne	a3, a2, 1b
+	nop
+########
+## end
+########
+#endif
+TLBInit_finish:
 	jr	ra
 	nop
 END(CPU_TLBInit)
@@ -1022,98 +681,13 @@ END(tgt_getchar)
 #define B115200 115200
 
 LEAF(initserial)
-#if 0 // Lc modify
-#ifdef CONFIG_EJTAG_SERIAL
-	/*enable cp0 count*/
-	mfc0 v0,$23
-	li v1,0x200000
-	or v0,v1
-	mtc0 v0,$23
-	jr ra 
-	nop
-#endif
-	la	v0, COM1_BASE_ADDR
+	la	v0, COM1_BASE_ADDR  #COM1_BASE_ADDR:0xbfe40000
 1:
 	li	v1, FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_4
 	sb	v1, NSREG(NS16550_FIFO)(v0)
-	li	v1, CFCR_DLAB
-	sb	v1, NSREG(NS16550_CFCR)(v0)
-#ifdef LS1FSOC
-	li a0, 0xbfe78030
-	lw a0,(a0)
-	and a0,0x700
-	srl a0,8
-	addiu a0,3
-	li v1,APB_CLK
-	multu a0,v1
-	mflo v1
-	li a0,2*16*CONS_BAUD
-	divu v1,a0
-	mflo v1
- //	li	v1, ((APB_CLK*DDR_MULT)/(2*16*CONS_BAUD))     // 8MHz crystal,   M[7:3]=6     1fboard
-#else
-	move	v1,a0
-	bnez	v1,2f
-	nop
-	li	v1,APB_CLK
-	li	a0,0xbfe78030
-	lw	a1,4(a0)
-	li	a2,0xc00
-	and	a1,a2
-	beq 	a1,a2,2f
-	nop
-	lw	a1,(a0)
-	andi	a2,a1,0x3f
-	addiu	a2,12
-	sll     a2,10
-	srl a1,8
-	andi	a1,0x3ff
-	addu	a1,a2
-	li	a2,(APB_CLK>>11)
-	multu   a1,a2
-	mflo    v1
-	lw	a1,4(a0)
-	srl	a1,14
-	andi    a2,a1,0x20
-	beqz    a2,1f
-	nop
-	andi    a1,0x1f
-	divu    v1,a1
-	mflo    v1
-	b 2f
-	nop
-1:
-	srl v1,1	
-2:
-#if 0
-/*save div,for serial debug*/
-	.set mips32
-	mtc0 v1,$25,1
-	.set mips0
-#endif
-	li a1,2*16*CONS_BAUD
-	divu v1,v1,a1
-#endif
-	sb	v1, NSREG(NS16550_DATA)(v0)
-	srl	v1, 8
-	sb	v1, NSREG(NS16550_IER)(v0)
-	li	v1, CFCR_8BITS
-	sb	v1, NSREG(NS16550_CFCR)(v0)
-	li	v1, MCR_DTR|MCR_RTS
-	sb	v1, NSREG(NS16550_MCR)(v0)
-	li	v1, 0x0
-	sb	v1, NSREG(NS16550_IER)(v0)
-        
-        #disable all interrupt
-        li      v1, 0x0
-        sb      v1, NSREG(NS16550_IER)(v0)
-	j	ra
-	nop
-#else
-	la	v0, COM1_BASE_ADDR
-1:
-	li	v1, FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_4
-	sb	v1, NSREG(NS16550_FIFO)(v0)
+########
+##set baud rate
+########
 	li	v1, CFCR_DLAB
 	sb	v1, NSREG(NS16550_CFCR)(v0)
  	//li	v1, NS16550HZ/(16*CONS_BAUD)
@@ -1123,6 +697,11 @@ LEAF(initserial)
 	sb	v1, NSREG(NS16550_IER)(v0)
 	li	v1, CFCR_8BITS
 	sb	v1, NSREG(NS16550_CFCR)(v0)
+########
+##CODE 1: end
+########
+	li	v1, CFCR_8BITS
+	sb	v1, NSREG(NS16550_CFCR)(v0)
 	li	v1, MCR_DTR|MCR_RTS
 	sb	v1, NSREG(NS16550_MCR)(v0)
 	li	v1, 0x0
@@ -1130,13 +709,11 @@ LEAF(initserial)
 
 	j	ra
 	nop
-#endif
 END(initserial)
 
 __main:
 	j	ra
 	nop
-
 
 	.rdata
 transmit_pat_msg:
@@ -1155,18 +732,20 @@ hexchar:
 	.ascii	"0123456789abcdef"
 
 	.text
-	.align	2
+//	.align	2
 /*
  *   I2C Functions used in early startup code to get SPD info from
  *   SDRAM modules. This code must be entirely PIC and RAM independent.
  */
 
+#if 1
 // Lc add to test memory
     .ent checkerr
 checkerr:
     //la  a0, errstr
     //bal stringserial
     //nop
+	PRINTSTR("Error!!\r\n");
 	li  t1, 0xbfd00010   //confreg cr04
 	lw	t0, 0x0(t1)
 	andi t0, t0, 0x5f //LED bit 5
@@ -1174,13 +753,16 @@ checkerr:
     jr ra
     nop
     .end checkerr
-
+#if 0
 	.rdata
 	.align	5
 errstr:
     .asciz "error"
+#endif
+#endif
 
 #define Index_Store_Tag_D			0x09
+#define Index_Store_Tag_I			0x08
 #define Index_Invalidate_I			0x00
 #define Index_Writeback_Inv_D			0x01
 
@@ -1192,79 +774,38 @@ END(nullfunction)
 	.ent	cache_init
     .global cache_init
     .set noreorder
-cache_init:
-        move t1,ra
-####part 2####
-cache_detect_4way:
+	.text
     .set mips32
-        mfc0    t4, CP0_CONFIG,1
-	lui	v0, 0x7
-        and    v0, t4, v0    
-	srl	t3, v0, 16    #ic
-
-	li	t5,0x800 #32*64
-	srl	v1,t4,22
-	andi	v1,7
-	sll	t5,v1   #InstCacheSetSize
-	sll	t5,t3	#t6 InstCacheSize
-
-
-        andi    v0, t4, 0x0380
-        srl     t7, v0, 7     #dc
-
-	li	t6,0x800 #32*64
-	srl	v1,t4,13
-	andi	v1,7
-	sll	t6,v1  #DataCacheSetSize
-	sll	t6,t7  #t5 DataCacheSize
-
-####part 3####
-#	.set	mips3
-	lui	a0, 0x8000
-	addu	a1, $0, t5
-	addu	a2, $0, t6
-cache_init_d2way:
-#a0=0x80000000, a1=icache_size, a2=dcache_size
-#a3, v0 and v1 used as local registers
-	mtc0	$0, CP0_TAGHI
-	addu	v0, $0, a0
-	addu	v1, a0, a2
-1:	slt	a3, v0, v1
-	beq	a3, $0, 1f
-	nop
-	mtc0	$0, CP0_TAGLO
-	cache	Index_Store_Tag_D, 0x0(v0)	# 1 way
-4:	beq	$0, $0, 1b
+cache_init:
+#if 1
+########
+## cache init
+########
+    li      v1, 0x80001000 #127 entry
+    li      v0, 0x80000000
+	mtc0	zero, COP_0_TAG_LO
+	mtc0	zero, COP_0_TAG_HI
+1:  cache	Index_Store_Tag_D, 0x0(v0)	    # 1 way
+	cache	Index_Store_Tag_D, 0x1000(v0)	# 2 way
+	cache	Index_Store_Tag_D, 0x2000(v0)	# 3 way
+	cache	Index_Store_Tag_D, 0x3000(v0)	# 4 way
+    cache	Index_Store_Tag_I, 0x0(v0)   	# 1 way
+	cache	Index_Store_Tag_I, 0x1000(v0)	# 2 way
+	cache	Index_Store_Tag_I, 0x2000(v0)	# 3 way
+	cache	Index_Store_Tag_I, 0x3000(v0)	# 4 way
 	addiu	v0, v0, 0x20
-1:
-cache_flush_i2way:
-	addu	v0, $0, a0
-	addu	v1, a0, a1
-1:	slt	a3, v0, v1
-	beq	a3, $0, 1f
-	nop
-	cache	Index_Invalidate_I, 0x0(v0)	# 1 way
-4:	beq	$0, $0, 1b
-	addiu	v0, v0, 0x20
-1:
-cache_flush_d2way:
-	addu	v0, $0, a0
-	addu	v1, a0, a2
-1:	slt	a3, v0, v1
-	beq	a3, $0, 1f
-	nop
-	cache	Index_Writeback_Inv_D, 0x0(v0) 	#1 way
-4:	beq	$0, $0, 1b
-	addiu	v0, v0, 0x20
-	.set	mips0
-
-1:
-cache_init_finish:
-    jr	t1
+    bne     v0, v1, 1b
     nop
+########
+##end
+########
+#endif
+cache_init_finish:
+    jr ra
+    nop
+	.set	mips1
     .set reorder
 	.end 	cache_init
-
 
 #define REG_ADDRESS 0x0
 #define CONFIG_BASE 0xaffffe00

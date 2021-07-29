@@ -1172,14 +1172,10 @@ int i;
 	default:
 		while(ioctl(s, SIOCGIFADDR, ifra)==0)
 		{
-			printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		(void) ioctl(s, SIOCDIFADDR, ifr);
-			printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		}
 		setsin (SIN(ifra->ifra_addr), AF_INET, inet_addr(argv[2]));
-			printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		(void) ioctl(s, SIOCSIFADDR, ifra);
-			printf("Lc_test: in %s at %d\n", __func__, __LINE__);
 		if(argc>=4)
 		 {
 		 setsin (SIN(ifra->ifra_addr), AF_INET, inet_addr(argv[3]));
